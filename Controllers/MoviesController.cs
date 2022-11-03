@@ -132,7 +132,7 @@ namespace Pets_API_Practice.Controllers
             return await _context.Movies.Where(m => m.Genre.Contains(genre)).ToListAsync();
         }
 
-        [HttpGet("GetRandomMovie")] //Get a random movie pick by genre
+        [HttpGet("GetRandomMovie")] //Get a random movie
         public Movie GetRandom()
         {  
             List<Movie> movies = _context.Movies.ToList();
@@ -143,27 +143,47 @@ namespace Pets_API_Practice.Controllers
             return movies[index];
         }
 
-        [HttpGet("SearchGenreRandomMovie/{genre}")]
-        public IEnumerable<Movie> RandomGenreSearch()
+        [HttpGet("GetRandomMovieByGenre/{genre}")] //Get a random movie pick by genre
+        public IEnumerable<Movie> RandomGenreSearch(string genre) //using LINQ
+        {
+            List<Movie> movies = _context.Movies.ToList();
+            
+            var rnd = new Random();
+            int index = rnd.Next(movies.Count);
+
+            return _context.Movies.Where(m => m.Genre.Contains(genre) && index.Equals(m.Id)); //works, but gaps in Id/index create null reports. Will sometimes get correct Id and work, but if they don't match, returns a blank box.
+        }
+
+        [HttpGet("GetRandomMovieList/{quantity}")] //Get a list of random movie picks
+        public IEnumerable<Movie> RandomMovieList(int quantity)
         {
             List<Movie> movies = _context.Movies.ToList();
 
             var rnd = new Random();
             int index = rnd.Next(movies.Count);
 
-            /*return _HERE__*/
+            return movies.OrderBy(m => rnd.Next()).Take(quantity).ToList(); //order 'quantity defined by user' movies randomly,
         }
-        
-         /* 
-         
-        Get a random movie pick from a specific category
-            User specifies category as a query parameter
 
 
-        Get a list of random movie picks
-            User specifies quantity as a query paramete*/
+        private List<string> GetGenre() //Get a list of all movie categories part 1
+        {
+            List<string> genre = new List<string>();
+            List<Movie> movies = _context.Movies.ToList();
 
+            foreach (Movie m in movies)
+            {
+                genre.Add(m.Genre);
+            }
+            genre.Sort();
+            return genre;
+        }
 
+        [HttpGet("GetAllGenres")] //Get a list of all movie categories part 2
+        public async Task<ActionResult<IEnumerable<String>>> GetMovieGenre()
+        {
+            return GetGenre();
+        }
 
 
         [HttpGet("SearchByTitle/{title}")] //search by keyword
@@ -171,7 +191,6 @@ namespace Pets_API_Practice.Controllers
         {
             return await _context.Movies.Where(m => m.Title.Contains(title)).ToListAsync();
         }
-
 
         //no (), as there is no user input needed
         //this function handles the functionality/process
